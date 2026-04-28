@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>RealProduct — Les vrais prix, en temps réel</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:6rem 3rem 3rem;position:relative;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--accent-dim);border:1px solid var(--border-accent);border-radius:100px;padding:5px 14px 5px 8px;font-size:.75rem;font-weight:600;color:var(--accent);width:fit-content;margin-bottom:2rem;}
+.hero h1{font-size:clamp(2.6rem,5vw,5rem);font-weight:800;max-width:16ch;margin-bottom:1.2rem;line-height:1.05;}
+.hero h1 .hl{color:var(--accent);}
+.hero-sub{font-size:1rem;color:var(--text2);max-width:46ch;line-height:1.75;margin-bottom:2.5rem;}
+.hero-actions{display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:3.5rem;}
+
+/* SEARCH BAR */
+.search-hero{max-width:600px;display:flex;gap:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s,box-shadow .2s;}
+.search-hero:focus-within{border-color:var(--border-accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.search-icon-wrap{display:flex;align-items:center;padding:0 1rem;color:var(--accent);}
+.search-icon-wrap svg{width:16px;height:16px;stroke:var(--accent);stroke-width:2;fill:none;}
+.search-hero input{flex:1;background:transparent;border:none;outline:none;padding:.9rem 0;font-size:.95rem;color:var(--text);}
+.search-hero input::placeholder{color:var(--text3);}
+.search-hero button{margin:6px;border-radius:7px;}
+
+/* STATS */
+.stats-bar{display:flex;gap:3rem;padding:2.5rem 3rem;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface);position:relative;z-index:2;}
+.stat-item .val{font-family:'Bricolage Grotesque',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1;}
+.stat-item .val span{color:var(--accent);}
+.stat-item .lbl{font-size:.82rem;color:var(--text2);margin-top:4px;}
+
+/* LIVE SECTION */
+.live-section{padding:4rem 3rem;position:relative;z-index:2;}
+.live-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+.live-title{display:flex;align-items:center;gap:.7rem;font-family:'Bricolage Grotesque',sans-serif;font-size:1.2rem;font-weight:700;}
+.live-title svg{width:16px;height:16px;stroke:var(--accent);stroke-width:2;fill:none;}
+
+/* FEED */
+.feed{display:flex;flex-direction:column;gap:.6rem;}
+.feed-item{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;transition:border-color .2s,transform .2s;animation:feedIn .4s cubic-bezier(.34,1.2,.64,1);}
+.feed-item:hover{border-color:var(--border-accent);transform:translateX(3px);}
+@keyframes feedIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+.fi-left{display:flex;align-items:center;gap:.9rem;}
+.fi-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--border-accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--accent);font-family:'Bricolage Grotesque',sans-serif;flex-shrink:0;}
+.fi-info .fi-action{font-size:.82rem;font-weight:600;margin-bottom:2px;}
+.fi-info .fi-action span{color:var(--accent);}
+.fi-meta{display:flex;align-items:center;gap:.4rem;font-size:.68rem;color:var(--text3);}
+.fi-meta svg{width:10px;height:10px;stroke:var(--text3);stroke-width:2;fill:none;}
+.fi-price{font-family:'Bricolage Grotesque',sans-serif;font-size:1.1rem;font-weight:800;letter-spacing:-.02em;white-space:nowrap;margin-left:1rem;}
+
+/* CATEGORIES */
+.categories-section{padding:4rem 3rem;border-top:1px solid var(--border);position:relative;z-index:2;background:var(--bg2);}
+.cats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1.5rem;}
+.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.4rem;display:flex;align-items:center;gap:.9rem;cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;}
+.cat-card:hover{border-color:var(--border-accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.12);}
+.cat-icon{width:38px;height:38px;border-radius:9px;background:var(--accent-dim);border:1px solid var(--border-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cat-icon svg{width:17px;height:17px;stroke:var(--accent);stroke-width:1.75;fill:none;}
+.cat-name{font-size:.875rem;font-weight:600;}
+.cat-count{font-size:.72rem;color:var(--text3);}
+
+/* ORB */
+.orb{position:fixed;width:600px;height:600px;background:radial-gradient(circle,var(--accent-glow) 0%,transparent 68%);border-radius:50%;pointer-events:none;z-index:0;top:-200px;right:-150px;animation:orbDrift 14s ease-in-out infinite alternate;}
+@keyframes orbDrift{to{transform:translate(-80px,120px) scale(1.1);}}
+
+@media(max-width:768px){
+  .hero{padding:5rem 1.5rem 2rem;}
+  .stats-bar{flex-wrap:wrap;gap:1.5rem;padding:2rem 1.5rem;}
+  .live-section,.categories-section{padding:3rem 1.5rem;}
+  .cats-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<div class="orb"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    RealProduct
+  </a>
+  <ul class="nav-links">
+    <li><a href="/search" class="active">Comparer</a></li>
+    <li><a href="#categories">Catégories</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="navAuth" style="display:flex;gap:.6rem;">
+      <button class="btn btn-ghost btn-sm" onclick="openModal('authModal')">Connexion</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('authModal')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        S'inscrire
+      </button>
+    </div>
+    <div id="navUser" style="display:none;" class="nav-user">
+      <div class="nav-user-info">
+        <span class="nav-user-name" id="navUserName"></span>
+        <span class="nav-user-pts" id="navUserPoints"></span>
+      </div>
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+    <button class="theme-toggle" id="themeToggle"></button>
+  </div>
+</nav>
+
+<main class="z2 pt-nav">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-badge"><span class="live-dot"></span>Prix mis à jour en temps réel</div>
+    <h1>Payez le <span class="hl">vrai prix</span> — jamais de mauvaise surprise</h1>
+    <p class="hero-sub">RealProduct compare les prix dans les marchés et supermarchés autour de vous. La communauté renseigne les prix, vous économisez.</p>
+
+    <div class="search-hero">
+      <div class="search-icon-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+      <input type="text" id="heroSearch" placeholder='Cherchez "tomates", "riz", "huile"...' autocomplete="off"/>
+      <button class="btn btn-primary" onclick="goSearch()">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Comparer
+      </button>
+    </div>
+
+    <div class="hero-actions mt-3">
+      <button class="btn btn-secondary" onclick="openModal('addPriceModal')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un prix
+      </button>
+      <a href="/search" class="btn btn-ghost">
+        Voir tous les produits
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><div class="val skeleton" style="width:80px;height:2rem;"></div><div class="lbl">Prix ajoutés</div></div>
+    <div class="stat-item"><div class="val skeleton" style="width:60px;height:2rem;"></div><div class="lbl">Magasins référencés</div></div>
+    <div class="stat-item"><div class="val skeleton" style="width:70px;height:2rem;"></div><div class="lbl">Utilisateurs actifs</div></div>
+    <div class="stat-item"><div class="val skeleton" style="width:80px;height:2rem;"></div><div class="lbl">Économies moyennes</div></div>
+  </div>
+
+  <!-- LIVE FEED -->
+  <section class="live-section">
+    <div class="live-header">
+      <div class="live-title">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Derniers prix ajoutés
+        <span class="live-dot"></span>
+      </div>
+      <a href="/search" class="btn btn-ghost btn-sm">Voir tout
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+    <div class="feed" id="feed">
+      <!-- Skeletons -->
+      <div class="feed-item"><div class="skeleton" style="width:100%;height:44px;border-radius:8px;"></div></div>
+      <div class="feed-item"><div class="skeleton" style="width:100%;height:44px;border-radius:8px;"></div></div>
+      <div class="feed-item"><div class="skeleton" style="width:100%;height:44px;border-radius:8px;"></div></div>
+    </div>
+  </section>
+
+  <!-- CATEGORIES -->
+  <section class="categories-section" id="categories">
+    <div class="sec-tag"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Parcourir par catégorie</div>
+    <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:.5rem;">Que cherchez-vous ?</h2>
+    <p class="text-muted" style="font-size:.9rem;margin-bottom:1.5rem;">Cliquez sur une catégorie pour comparer les prix instantanément.</p>
+    <div class="cats-grid" id="catsGrid">
+      <div class="skeleton" style="height:72px;border-radius:10px;"></div>
+      <div class="skeleton" style="height:72px;border-radius:10px;"></div>
+      <div class="skeleton" style="height:72px;border-radius:10px;"></div>
+      <div class="skeleton" style="height:72px;border-radius:10px;"></div>
+    </div>
+  </section>
+</main>
+
+<!-- ── MODAL AUTH ── -->
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchTab('register')">S'inscrire</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="formLogin" class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="kofi@example.ci"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input class="form-input" type="password" id="loginPassword" placeholder="••••••••"/>
+      </div>
+      <div class="form-error" id="loginError"></div>
+      <button class="btn btn-primary btn-block mt-2" id="loginBtn" onclick="doLogin()">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Se connecter
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="formRegister" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom complet</label>
+        <input class="form-input" type="text" id="regName" placeholder="Kofi Atta"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" id="regEmail" placeholder="kofi@example.ci"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input class="form-input" type="password" id="regPassword" placeholder="Minimum 6 caractères"/>
+        <div class="form-hint">Minimum 6 caractères</div>
+      </div>
+      <div class="form-error" id="regError"></div>
+      <button class="btn btn-primary btn-block mt-2" id="registerBtn" onclick="doRegister()">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Créer mon compte
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL CONTRIBUER ── -->
+<div class="modal" id="addPriceModal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <span class="modal-title">Contribuer</span>
+      <button class="modal-close" onclick="closeModal('addPriceModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-tabs" style="overflow-x:auto;">
+      <button class="modal-tab active" id="ctab1" onclick="switchContribTab(1)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Prix
+      </button>
+      <button class="modal-tab" id="ctab2" onclick="switchContribTab(2)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Produit
+      </button>
+      <button class="modal-tab" id="ctab3" onclick="switchContribTab(3)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Magasin
+      </button>
+      <button class="modal-tab" id="ctab4" onclick="switchContribTab(4)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Catégorie
+      </button>
+    </div>
+
+    <!-- PRIX -->
+    <div id="ctabContent1" class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Produit</label>
+        <select class="form-input form-select" id="apProduct"></select>
+        <div class="form-hint">Produit manquant ? Allez sur l'onglet "Nouveau produit".</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Magasin</label>
+        <select class="form-input form-select" id="apStore"></select>
+        <div class="form-hint">Magasin manquant ? Allez sur l'onglet "Nouveau magasin".</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prix (FCFA)</label>
+        <input class="form-input" type="number" id="apPrice" placeholder="ex: 850" min="1"/>
+      </div>
+      <div class="form-error" id="apError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="apBtn" onclick="doAddPrice()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Publier le prix
+        </button>
+      </div>
+    </div>
+
+    <!-- PRODUIT -->
+    <div id="ctabContent2" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom du produit</label>
+        <input class="form-input" id="npName" placeholder="ex: Igname 1 kg, Huile Dinor 1L..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <select class="form-input form-select" id="npCat"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unité / Quantité</label>
+        <input class="form-input" id="npUnit" placeholder="ex: 1 kg, 500 g, 1 L, unité"/>
+      </div>
+      <div class="form-error" id="npError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="npBtn" onclick="doAddProduct()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter le produit
+        </button>
+      </div>
+    </div>
+
+    <!-- MAGASIN -->
+    <div id="ctabContent3" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom du magasin</label>
+        <input class="form-input" id="nsName" placeholder="ex: Marché de Yopougon..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input form-select" id="nsType">
+          <option value="marche">Marché</option>
+          <option value="supermarche">Supermarché</option>
+          <option value="boutique">Boutique / Épicerie</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quartier</label>
+        <input class="form-input" id="nsNeighborhood" placeholder="ex: Yopougon, Abobo, Cocody..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ville</label>
+        <input class="form-input" id="nsCity" value="Abidjan"/>
+      </div>
+      <div class="form-error" id="nsError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="nsBtn" onclick="doAddStore()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter le magasin
+        </button>
+      </div>
+    </div>
+    <!-- CATEGORIE -->
+    <div id="ctabContent4" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom de la catégorie</label>
+        <input class="form-input" id="ncName" placeholder="ex: Épices, Tubercules, Cosmétiques..."/>
+        <div class="form-hint">La catégorie sera disponible immédiatement pour classer les produits.</div>
+      </div>
+      <div class="form-error" id="ncError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="ncBtn" onclick="doAddCategory()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Créer la catégorie
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+<script>
+const AVATAR_COLORS = [
+  ['rgba(0,220,110,.12)','var(--accent)'],
+  ['rgba(59,130,246,.12)','var(--blue)'],
+  ['rgba(245,158,11,.12)','var(--warn)'],
+  ['rgba(239,68,68,.12)','var(--danger)'],
+];
+
+/* ── SEARCH ── */
+function goSearch() {
+  const q = document.getElementById('heroSearch').value.trim();
+  window.location.href = `/search${q ? `?q=${encodeURIComponent(q)}` : ''}`;
+}
+document.getElementById('heroSearch').addEventListener('keydown', e => { if (e.key === 'Enter') goSearch(); });
+
+/* ── STATS ── */
+async function loadStats() {
+  try {
+    const [recent, stores] = await Promise.all([rp.getRecent(100), rp.getStores()]);
+    const statsBar = document.getElementById('statsBar');
+    statsBar.innerHTML = `
+      <div class="stat-item"><div class="val">${recent.length}<span>+</span></div><div class="lbl">Prix récents ajoutés</div></div>
+      <div class="stat-item"><div class="val">${stores.length}<span>+</span></div><div class="lbl">Magasins référencés</div></div>
+      <div class="stat-item"><div class="val">8<span>K+</span></div><div class="lbl">Utilisateurs actifs</div></div>
+      <div class="stat-item"><div class="val">~30<span>%</span></div><div class="lbl">D'économies par panier</div></div>`;
+  } catch {}
+}
+
+/* ── LIVE FEED ── */
+async function loadFeed() {
+  try {
+    const items = await rp.getRecent(12);
+    const feed = document.getElementById('feed');
+    if (!items.length) {
+      feed.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Aucun prix encore</h3><p>Soyez le premier à ajouter un prix !</p></div>`;
+      return;
+    }
+    feed.innerHTML = items.map((item, i) => {
+      const [bg, col] = AVATAR_COLORS[i % AVATAR_COLORS.length];
+      const initials = (item.contributor || 'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      return `
+        <div class="feed-item" onclick="window.location='/search?q=${encodeURIComponent(item.product_name)}'" style="cursor:pointer;">
+          <div class="fi-left">
+            <div class="fi-avatar" style="background:${bg};color:${col};">${initials}</div>
+            <div class="fi-info">
+              <div class="fi-action"><span>${item.contributor}</span> a ajouté un prix</div>
+              <div class="fi-meta">
+                <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <b>${item.product_name}</b> · ${item.store_name} · ${timeAgo(item.created_at)}
+              </div>
+            </div>
+          </div>
+          <div class="fi-price">${Number(item.price).toLocaleString('fr-FR')} F</div>
+        </div>`;
+    }).join('');
+  } catch (e) { console.error(e); }
+}
+
+/* ── CATEGORIES ── */
+const CAT_ICONS = {
+  'Légumes': '<path d="M12 2a10 10 0 0 1 10 10c0 5-4 9-10 9S2 17 2 12 6 2 12 2zm0 0c0 5-2 9-5 11m5-11c0 5 2 9 5 11"/>',
+  'Fruits': '<circle cx="12" cy="12" r="10"/><path d="M12 2c0 0-4 4-4 10s4 10 4 10"/>',
+  'Céréales & Féculents': '<path d="M2 20h20M6 20V10l6-6 6 6v10"/>',
+  'Viandes & Poissons': '<path d="M6.5 6.5c3.3-3.3 8.7-3.3 12 0L22 10l-4 4-3.5-3.5-7 7L4 14l3-4-0.5-.5"/>',
+  'Produits laitiers': '<path d="M8 2h8l2 6H6L8 2zm-2 6v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/>',
+  'Huiles & Condiments': '<path d="M9 3h6l1 6H8L9 3zm-1 6v12h8V9"/><line x1="12" y1="9" x2="12" y2="21"/>',
+  'Boissons': '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
+  'Entretien & Hygiène': '<path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/>',
+};
+async function loadCategories() {
+  try {
+    const cats = await rp.getCategories();
+    document.getElementById('catsGrid').innerHTML = cats.map(c => `
+      <div class="cat-card" onclick="window.location='/search?category_id=${c.id}'">
+        <div class="cat-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.75">${CAT_ICONS[c.name] || '<circle cx="12" cy="12" r="10"/>'}</svg></div>
+        <div><div class="cat-name">${c.name}</div></div>
+      </div>`).join('');
+  } catch {}
+}
+
+/* ── AUTH ── */
+function switchTab(tab) {
+  document.getElementById('formLogin').style.display    = tab === 'login' ? 'block' : 'none';
+  document.getElementById('formRegister').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Connexion...`;
+  try {
+    const res = await rp.login({ email, password });
+    rp.setSession(res.token, res.user);
+    closeModal('authModal');
+    toast('Bienvenue ' + res.user.name.split(' ')[0] + ' !');
+    renderNav();
+    updateNavAvatar(res.user);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Se connecter`;
+  }
+}
+
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const errEl = document.getElementById('regError');
+  const btn = document.getElementById('registerBtn');
+  errEl.classList.remove('show');
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span> Création...`;
+  try {
+    const res = await rp.register({ name, email, password });
+    rp.setSession(res.token, res.user);
+    closeModal('authModal');
+    toast('Compte créé ! Bienvenue ' + res.user.name.split(' ')[0] + ' ! 🎉');
+    renderNav();
+    updateNavAvatar(res.user);
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `Créer mon compte`;
+  }
+}
+
+function updateNavAvatar(user) {
+  const el = document.getElementById('navAvatar');
+  if (el) el.textContent = user.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+/* ── CONTRIB TABS ── */
+function switchContribTab(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`ctab${i}`).classList.toggle('active', i === n);
+    document.getElementById(`ctabContent${i}`).style.display = i === n ? 'block' : 'none';
+  });
+}
+
+/* ── AJOUTER PRIX ── */
+async function initAddPriceModal() {
+  try {
+    const [products, stores, cats] = await Promise.all([rp.searchProducts(''), rp.getStores(), rp.getCategories()]);
+    document.getElementById('apProduct').innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+    document.getElementById('apStore').innerHTML   = stores.map(s   => `<option value="${s.id}">${s.name} — ${s.neighborhood||s.city}</option>`).join('');
+    document.getElementById('npCat').innerHTML     = cats.map(c     => `<option value="${c.id}">${c.name}</option>`).join('');
+  } catch {}
+}
+
+async function doAddPrice() {
+  if (!rp.isLogged()) { openModal('authModal'); closeModal('addPriceModal'); return; }
+  const product_id = document.getElementById('apProduct').value;
+  const store_id   = document.getElementById('apStore').value;
+  const price      = document.getElementById('apPrice').value;
+  const errEl      = document.getElementById('apError');
+  const btn        = document.getElementById('apBtn');
+  errEl.classList.remove('show');
+  if (!price) { errEl.textContent = 'Veuillez entrer un prix.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    const res = await rp.addPrice({ product_id: Number(product_id), store_id: Number(store_id), price: Number(price) });
+    toast(res.message);
+    closeModal('addPriceModal');
+    document.getElementById('apPrice').value = '';
+    loadFeed();
+    const me = await rp.me();
+    const stored = rp.getUser();
+    rp.setSession(rp.getToken(), { ...stored, points: me.points });
+    renderNav();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+async function doAddProduct() {
+  if (!rp.isLogged()) { openModal('authModal'); closeModal('addPriceModal'); return; }
+  const name = document.getElementById('npName').value.trim();
+  const category_id = document.getElementById('npCat').value;
+  const unit = document.getElementById('npUnit').value.trim();
+  const errEl = document.getElementById('npError');
+  const btn   = document.getElementById('npBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    await rp.createProduct({ name, category_id: Number(category_id), unit: unit || 'unité' });
+    toast(`"${name}" ajouté ! Allez sur l'onglet Prix pour ajouter son prix.`);
+    document.getElementById('npName').value = '';
+    document.getElementById('npUnit').value = '';
+    await initAddPriceModal();
+    switchContribTab(1);
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+async function doAddStore() {
+  if (!rp.isLogged()) { openModal('authModal'); closeModal('addPriceModal'); return; }
+  const name         = document.getElementById('nsName').value.trim();
+  const type         = document.getElementById('nsType').value;
+  const neighborhood = document.getElementById('nsNeighborhood').value.trim();
+  const city         = document.getElementById('nsCity').value.trim() || 'Abidjan';
+  const errEl = document.getElementById('nsError');
+  const btn   = document.getElementById('nsBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    await rp.addStore({ name, type, neighborhood, city });
+    toast(`"${name}" ajouté ! Allez sur l'onglet Prix pour y ajouter des prix.`);
+    document.getElementById('nsName').value = '';
+    document.getElementById('nsNeighborhood').value = '';
+    await initAddPriceModal();
+    switchContribTab(1);
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+async function doAddCategory() {
+  if (!rp.isLogged()) { openModal('authModal'); closeModal('addPriceModal'); return; }
+  const name  = document.getElementById('ncName').value.trim();
+  const errEl = document.getElementById('ncError');
+  const btn   = document.getElementById('ncBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom de la catégorie est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    const res = await rp.createCategory(name);
+    toast(res.message);
+    document.getElementById('ncName').value = '';
+    await initAddPriceModal(); // Refresh pour inclure la nouvelle catégorie
+    switchContribTab(2); // Aller sur "Nouveau produit" pour l'utiliser
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+/* ── INIT ── */
+const user = rp.getUser();
+if (user) updateNavAvatar(user);
+
+loadStats();
+loadFeed();
+loadCategories();
+initAddPriceModal();
+
+// Auto-refresh feed every 30s
+setInterval(loadFeed, 30000);
+</script>
+</body>
+</html>

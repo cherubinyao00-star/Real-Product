@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Mon compte — RealProduct</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+.page{max-width:860px;margin:0 auto;padding:2rem 1.5rem;position:relative;z-index:2;}
+
+/* PROFILE HEADER */
+.profile-header{display:flex;align-items:center;gap:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;margin-bottom:2rem;}
+.profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--accent-dim);border:2px solid var(--border-accent);display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent);flex-shrink:0;}
+.profile-info h1{font-size:1.4rem;font-weight:800;margin-bottom:.2rem;}
+.profile-info .email{font-size:.85rem;color:var(--text2);margin-bottom:.8rem;}
+.profile-stats{display:flex;gap:1.5rem;flex-wrap:wrap;}
+.pstat{text-align:center;}
+.pstat-val{font-family:'Bricolage Grotesque',sans-serif;font-size:1.4rem;font-weight:800;color:var(--text);line-height:1;}
+.pstat-val span{color:var(--accent);}
+.pstat-label{font-size:.72rem;color:var(--text2);margin-top:3px;}
+
+/* TABS */
+.tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0;}
+.tab-btn{padding:.7rem 1.2rem;background:none;border:none;border-bottom:2px solid transparent;font-size:.875rem;font-weight:600;color:var(--text2);cursor:pointer;transition:color .2s,border-color .2s;margin-bottom:-1px;display:flex;align-items:center;gap:.5rem;}
+.tab-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* PRICE ROW */
+.price-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.2rem;margin-bottom:.7rem;transition:border-color .2s;}
+.price-row:hover{border-color:var(--border-accent);}
+.pr-left{display:flex;align-items:center;gap:.9rem;}
+.pr-icon{width:36px;height:36px;border-radius:9px;background:var(--accent-dim);border:1px solid var(--border-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pr-icon svg{width:15px;height:15px;stroke:var(--accent);stroke-width:2;fill:none;}
+.pr-product{font-size:.9rem;font-weight:700;margin-bottom:2px;}
+.pr-meta{display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--text2);flex-wrap:wrap;}
+.pr-meta svg{width:10px;height:10px;stroke:var(--text3);stroke-width:2;fill:none;}
+.pr-right{display:flex;align-items:center;gap:.8rem;}
+.pr-price{font-family:'Bricolage Grotesque',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-.02em;white-space:nowrap;}
+.btn-delete{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:7px;color:var(--danger);transition:background .2s,transform .2s;flex-shrink:0;}
+.btn-delete:hover{background:rgba(239,68,68,.15);transform:scale(1.05);}
+.btn-delete svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;}
+
+/* ADD FORM */
+.add-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1.5rem;}
+.add-card h3{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem;}
+.add-card h3 svg{width:16px;height:16px;stroke:var(--accent);stroke-width:2;fill:none;}
+.add-grid{display:grid;grid-template-columns:1fr 1fr 120px auto;gap:.8rem;align-items:end;}
+@media(max-width:680px){.add-grid{grid-template-columns:1fr 1fr;}. profile-header{flex-direction:column;text-align:center;}.profile-stats{justify-content:center;}}
+
+/* CONFIRM DIALOG */
+.confirm-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+.confirm-overlay.open{display:flex;}
+.confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2rem;max-width:360px;width:90%;text-align:center;}
+.confirm-box h3{font-size:1.1rem;font-weight:700;margin-bottom:.8rem;}
+.confirm-box p{font-size:.875rem;color:var(--text2);margin-bottom:1.5rem;line-height:1.6;}
+.confirm-actions{display:flex;gap:.8rem;justify-content:center;}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    RealProduct
+  </a>
+  <ul class="nav-links">
+    <li><a href="/search">Comparer</a></li>
+    <li><a href="/profile.html" class="active">Mon compte</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="navUser" class="nav-user">
+      <div class="nav-user-info">
+        <span class="nav-user-name" id="navUserName"></span>
+        <span class="nav-user-pts" id="navUserPoints"></span>
+      </div>
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Déconnexion
+      </button>
+    </div>
+    <button class="theme-toggle" id="themeToggle"></button>
+  </div>
+</nav>
+
+<div class="pt-nav">
+  <div class="page">
+
+    <!-- PROFILE HEADER -->
+    <div class="profile-header" id="profileHeader">
+      <div class="profile-avatar" id="profileAvatar">?</div>
+      <div class="profile-info">
+        <h1 id="profileName">Chargement...</h1>
+        <div class="email" id="profileEmail"></div>
+        <div class="profile-stats">
+          <div class="pstat"><div class="pstat-val" id="statPoints">—</div><div class="pstat-label">Points</div></div>
+          <div class="pstat"><div class="pstat-val" id="statContribs">—</div><div class="pstat-label">Contributions</div></div>
+          <div class="pstat"><div class="pstat-val" id="statMember">—</div><div class="pstat-label">Membre depuis</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('prices')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Mes prix ajoutés
+      </button>
+      <button class="tab-btn" onclick="switchTab('add')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un prix
+      </button>
+    </div>
+
+    <!-- TAB: MES PRIX -->
+    <div class="tab-content active" id="tab-prices">
+      <div id="myPricesList">
+        <div class="skeleton" style="height:64px;border-radius:10px;margin-bottom:.7rem;"></div>
+        <div class="skeleton" style="height:64px;border-radius:10px;margin-bottom:.7rem;"></div>
+        <div class="skeleton" style="height:64px;border-radius:10px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB: AJOUTER -->
+    <div class="tab-content" id="tab-add">
+      <div class="add-card">
+        <h3><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Nouveau prix</h3>
+        <div class="add-grid">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Produit</label>
+            <select class="form-input form-select" id="apProduct"></select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Magasin</label>
+            <select class="form-input form-select" id="apStore"></select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Prix (FCFA)</label>
+            <input class="form-input" type="number" id="apPrice" placeholder="850" min="1"/>
+          </div>
+          <div>
+            <button class="btn btn-primary w-full" id="apBtn" onclick="doAddPrice()">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Publier
+            </button>
+          </div>
+        </div>
+        <div class="form-error mt-1" id="apError"></div>
+        <div class="form-hint mt-1">Chaque contribution vous rapporte <strong style="color:var(--accent)">+5 points</strong>. Le prix est visible par tout le monde immédiatement.</div>
+      </div>
+
+      <!-- AJOUTER UN MAGASIN -->
+      <div class="add-card">
+        <h3><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Ajouter un magasin manquant</h3>
+        <div class="grid-2">
+          <div class="form-group" style="margin:0;"><label class="form-label">Nom du magasin</label><input class="form-input" id="stName" placeholder="ex: Marché de Yopougon"/></div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Type</label>
+            <select class="form-input form-select" id="stType">
+              <option value="marche">Marché</option>
+              <option value="supermarche">Supermarché</option>
+              <option value="boutique">Boutique</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;"><label class="form-label">Quartier</label><input class="form-input" id="stNeighborhood" placeholder="ex: Yopougon"/></div>
+          <div class="form-group" style="margin:0;"><label class="form-label">Ville</label><input class="form-input" id="stCity" value="Abidjan"/></div>
+        </div>
+        <div class="form-error mt-1" id="stError"></div>
+        <button class="btn btn-secondary mt-2" onclick="doAddStore()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter ce magasin
+        </button>
+      </div>
+
+      <!-- AJOUTER UN PRODUIT -->
+      <div class="add-card">
+        <h3><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>Ajouter un produit manquant</h3>
+        <div class="grid-2">
+          <div class="form-group" style="margin:0;"><label class="form-label">Nom du produit</label><input class="form-input" id="prName" placeholder="ex: Igname 1 kg"/></div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Catégorie</label>
+            <select class="form-input form-select" id="prCat"></select>
+          </div>
+          <div class="form-group" style="margin:0;"><label class="form-label">Unité</label><input class="form-input" id="prUnit" placeholder="ex: 1 kg, 500 g, 1 L"/></div>
+        </div>
+        <div class="form-error mt-1" id="prError"></div>
+        <button class="btn btn-secondary mt-2" onclick="doAddProduct()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter ce produit
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Supprimer ce prix ?</h3>
+    <p>Cette action est irréversible. Le prix sera retiré de la base de données et <strong>−5 points</strong> seront déduits de votre compte.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="document.getElementById('confirmOverlay').classList.remove('open')">Annuler</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+// ── AUTH GUARD ──────────────────────────────────────────────────
+if (!rp.isLogged()) window.location.href = '/';
+
+const user = rp.getUser();
+
+// ── INIT NAV ────────────────────────────────────────────────────
+if (user) {
+  const initials = user.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('navAvatar').textContent  = initials;
+  document.getElementById('profileAvatar').textContent = initials;
+}
+
+// ── LOAD PROFILE ────────────────────────────────────────────────
+async function loadProfile() {
+  try {
+    const me = await rp.me();
+    document.getElementById('profileName').textContent  = me.name;
+    document.getElementById('profileEmail').textContent = me.email;
+    document.getElementById('statPoints').innerHTML     = `${me.points}<span> pts</span>`;
+    document.getElementById('statContribs').textContent = me.contributions;
+    document.getElementById('statMember').textContent   = new Date(me.created_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+    // Sync stored user
+    rp.setSession(rp.getToken(), { ...user, points: me.points });
+    renderNav();
+  } catch {}
+}
+
+// ── LOAD MY PRICES ──────────────────────────────────────────────
+async function loadMyPrices() {
+  try {
+    const all = await rp.getRecent(200);
+    // Filter prices by current user
+    const mine = all.filter(p => p.contributor === user.name);
+    const list = document.getElementById('myPricesList');
+
+    if (!mine.length) {
+      list.innerHTML = `<div class="empty-state">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        <h3>Aucun prix ajouté</h3>
+        <p>Cliquez sur "Ajouter un prix" pour contribuer à la communauté.</p>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = mine.map(p => `
+      <div class="price-row" id="row-${p.id}">
+        <div class="pr-left">
+          <div class="pr-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div>
+            <div class="pr-product">${p.product_name} <span style="font-weight:400;color:var(--text3);font-size:.8rem;">(${p.unit})</span></div>
+            <div class="pr-meta">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              ${p.store_name}
+              <span>·</span>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${timeAgo(p.created_at)}
+            </div>
+          </div>
+        </div>
+        <div class="pr-right">
+          <div class="pr-price">${Number(p.price).toLocaleString('fr-FR')} F</div>
+          <button class="btn-delete" onclick="askDelete(${p.id})" title="Supprimer">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          </button>
+        </div>
+      </div>`).join('');
+  } catch (e) { console.error(e); }
+}
+
+// ── DELETE ──────────────────────────────────────────────────────
+let pendingDeleteId = null;
+function askDelete(id) {
+  pendingDeleteId = id;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  if (!pendingDeleteId) return;
+  const btn = document.getElementById('confirmDeleteBtn');
+  btn.disabled = true;
+  try {
+    await rp.deletePrice(pendingDeleteId);
+    document.getElementById('confirmOverlay').classList.remove('open');
+    document.getElementById(`row-${pendingDeleteId}`)?.remove();
+    toast('Prix supprimé.');
+    loadProfile();
+    // If list is now empty, reload
+    if (!document.querySelectorAll('.price-row').length) loadMyPrices();
+  } catch (e) { toast(e.message, 'error'); }
+  finally { btn.disabled = false; pendingDeleteId = null; }
+});
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay'))
+    document.getElementById('confirmOverlay').classList.remove('open');
+});
+
+// ── TABS ────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// ── ADD PRICE ───────────────────────────────────────────────────
+async function initForms() {
+  const [products, stores, cats] = await Promise.all([rp.searchProducts(''), rp.getStores(), rp.getCategories()]);
+  document.getElementById('apProduct').innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+  document.getElementById('apStore').innerHTML   = stores.map(s   => `<option value="${s.id}">${s.name} — ${s.neighborhood||s.city}</option>`).join('');
+  document.getElementById('prCat').innerHTML     = cats.map(c     => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+async function doAddPrice() {
+  const product_id = document.getElementById('apProduct').value;
+  const store_id   = document.getElementById('apStore').value;
+  const price      = document.getElementById('apPrice').value;
+  const errEl = document.getElementById('apError');
+  const btn   = document.getElementById('apBtn');
+  errEl.classList.remove('show');
+  if (!price) { errEl.textContent = 'Veuillez entrer un prix.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    const res = await rp.addPrice({ product_id: Number(product_id), store_id: Number(store_id), price: Number(price) });
+    toast(res.message);
+    document.getElementById('apPrice').value = '';
+    loadProfile();
+    loadMyPrices();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+async function doAddStore() {
+  const name = document.getElementById('stName').value.trim();
+  const type = document.getElementById('stType').value;
+  const neighborhood = document.getElementById('stNeighborhood').value.trim();
+  const city = document.getElementById('stCity').value.trim() || 'Abidjan';
+  const errEl = document.getElementById('stError');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  try {
+    await rp.addStore({ name, type, neighborhood, city });
+    toast(`"${name}" ajouté ! Il apparaît maintenant dans la liste.`);
+    document.getElementById('stName').value = '';
+    document.getElementById('stNeighborhood').value = '';
+    initForms(); // Refresh store list
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+}
+
+async function doAddProduct() {
+  const name = document.getElementById('prName').value.trim();
+  const category_id = document.getElementById('prCat').value;
+  const unit = document.getElementById('prUnit').value.trim();
+  const errEl = document.getElementById('prError');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  try {
+    await rp.createProduct({ name, category_id: Number(category_id), unit: unit || 'unité' });
+    toast(`"${name}" ajouté au catalogue !`);
+    document.getElementById('prName').value = '';
+    document.getElementById('prUnit').value = '';
+    initForms();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+loadProfile();
+loadMyPrices();
+initForms();
+</script>
+</body>
+</html>

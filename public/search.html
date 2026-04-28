@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Comparer les prix — RealProduct</title>
+<link rel="stylesheet" href="style.css"/>
+<style>
+.layout{display:grid;grid-template-columns:260px 1fr;gap:1.5rem;padding:1.5rem;min-height:calc(100vh - 60px);position:relative;z-index:2;}
+
+/* SIDEBAR */
+.sidebar{position:sticky;top:76px;align-self:start;}
+.sidebar-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem;}
+.sidebar-title{font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:700;padding:1rem 1.2rem;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:.5rem;}
+.sidebar-title svg{width:13px;height:13px;stroke:var(--accent);stroke-width:2;fill:none;}
+.filter-list{padding:.6rem;}
+.filter-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .6rem;border-radius:7px;cursor:pointer;transition:background .2s;font-size:.85rem;}
+.filter-item:hover{background:var(--surface2);}
+.filter-item input[type=radio],.filter-item input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px;}
+.filter-item.active{background:var(--accent-dim);color:var(--accent);font-weight:600;}
+
+/* MAIN */
+.main{}
+.search-bar{display:flex;gap:.6rem;margin-bottom:1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:var(--shadow);}
+.search-bar:focus-within{border-color:var(--border-accent);box-shadow:0 0 0 3px var(--accent-dim);}
+.sb-icon{display:flex;align-items:center;padding:0 1rem;}
+.sb-icon svg{width:16px;height:16px;stroke:var(--accent);stroke-width:2;fill:none;}
+.search-bar input{flex:1;background:transparent;border:none;outline:none;padding:.85rem 0;font-size:.95rem;color:var(--text);}
+.search-bar input::placeholder{color:var(--text3);}
+.search-bar button{margin:6px;border-radius:7px;}
+
+.results-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.results-count{font-size:.85rem;color:var(--text2);}
+
+/* PRODUCT CARD */
+.product-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1rem;transition:border-color .2s,box-shadow .2s;cursor:pointer;}
+.product-card:hover{border-color:var(--border-accent);box-shadow:0 6px 24px rgba(0,0,0,.15);}
+.pc-header{padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.pc-name{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;}
+.pc-unit{font-size:.75rem;color:var(--text3);font-weight:400;margin-top:2px;}
+.pc-prices{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.pc-price{background:var(--surface2);padding:1rem 1.2rem;position:relative;}
+.pc-price:first-child{background:rgba(0,220,110,.04);}
+.pc-store{font-size:.72rem;color:var(--text2);margin-bottom:.4rem;display:flex;align-items:center;gap:4px;}
+.pc-store svg{width:9px;height:9px;stroke:var(--text3);stroke-width:2;fill:none;}
+.pc-val{font-family:'Bricolage Grotesque',sans-serif;font-size:1.4rem;font-weight:800;letter-spacing:-.02em;}
+.pc-time{font-size:.65rem;color:var(--text3);margin-top:3px;display:flex;align-items:center;gap:3px;}
+.pc-time svg{width:9px;height:9px;stroke:var(--text3);stroke-width:2;fill:none;}
+.pc-footer{padding:.8rem 1.4rem;display:flex;align-items:center;justify-content:space-between;}
+.pc-gap{font-size:.78rem;color:var(--text2);}
+.pc-gap strong{color:var(--accent);}
+
+/* NO PRICES STATE */
+.pc-prices-empty{padding:1.2rem;text-align:center;color:var(--text3);font-size:.82rem;background:var(--surface2);}
+.pc-prices-empty svg{width:20px;height:20px;stroke:var(--text3);stroke-width:1.5;fill:none;margin:0 auto .4rem;}
+
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;padding:1rem;}
+  .sidebar{position:static;}
+  .pc-prices{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<nav class="nav">
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    RealProduct
+  </a>
+  <ul class="nav-links">
+    <li><a href="/search" class="active">Comparer</a></li>
+    <li><a href="/#categories">Catégories</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="navAuth" style="display:flex;gap:.6rem;">
+      <button class="btn btn-ghost btn-sm" onclick="openModal('authModal')">Connexion</button>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addPriceModal')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter un prix
+      </button>
+    </div>
+    <div id="navUser" style="display:none;" class="nav-user">
+      <div class="nav-user-info">
+        <span class="nav-user-name" id="navUserName"></span>
+        <span class="nav-user-pts" id="navUserPoints"></span>
+      </div>
+      <div class="nav-avatar" id="navAvatar">?</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addPriceModal')">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Ajouter
+      </button>
+      <button id="logoutBtn" class="btn btn-ghost btn-sm">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+    <button class="theme-toggle" id="themeToggle"></button>
+  </div>
+</nav>
+
+<div class="pt-nav">
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Type de magasin</div>
+        <div class="filter-list" id="filterType">
+          <label class="filter-item"><input type="radio" name="type" value="" checked/> Tous</label>
+          <label class="filter-item"><input type="radio" name="type" value="marche"/> Marchés</label>
+          <label class="filter-item"><input type="radio" name="type" value="supermarche"/> Supermarchés</label>
+          <label class="filter-item"><input type="radio" name="type" value="boutique"/> Boutiques</label>
+        </div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Catégorie</div>
+        <div class="filter-list" id="filterCat">
+          <label class="filter-item active"><input type="radio" name="cat" value="" checked/> Toutes</label>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="search-bar">
+        <div class="sb-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
+        <input type="text" id="searchInput" placeholder='Cherchez "tomates", "riz", "huile de palme"...' autocomplete="off"/>
+        <button class="btn btn-primary" onclick="doSearch()">Rechercher</button>
+      </div>
+
+      <div class="results-header">
+        <div class="results-count" id="resultsCount">Chargement...</div>
+        <button class="btn btn-secondary btn-sm" onclick="openModal('addPriceModal')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter un prix
+        </button>
+      </div>
+
+      <div id="results"></div>
+    </div>
+    <!-- TAB 4 : NOUVELLE CATEGORIE -->
+    <div id="ctabContent4" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom de la catégorie</label>
+        <input class="form-input" id="ncName" placeholder="ex: Épices, Tubercules, Cosmétiques..."/>
+        <div class="form-hint">Disponible immédiatement pour classer les produits.</div>
+      </div>
+      <div class="form-error" id="ncError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="ncBtn" onclick="doAddCategory()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Créer la catégorie
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchTab('register')">S'inscrire</button>
+    </div>
+    <div id="formLogin" class="modal-body">
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="loginEmail" placeholder="kofi@example.ci"/></div>
+      <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" id="loginPassword" placeholder="••••••••"/></div>
+      <div class="form-error" id="loginError"></div>
+      <button class="btn btn-primary btn-block mt-2" id="loginBtn" onclick="doLogin()">Se connecter</button>
+    </div>
+    <div id="formRegister" class="modal-body" style="display:none;">
+      <div class="form-group"><label class="form-label">Nom</label><input class="form-input" type="text" id="regName" placeholder="Kofi Atta"/></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" id="regEmail" placeholder="kofi@example.ci"/></div>
+      <div class="form-group"><label class="form-label">Mot de passe</label><input class="form-input" type="password" id="regPassword" placeholder="Min. 6 caractères"/></div>
+      <div class="form-error" id="regError"></div>
+      <button class="btn btn-primary btn-block mt-2" id="registerBtn" onclick="doRegister()">Créer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTRIBUER -->
+<div class="modal" id="addPriceModal">
+  <div class="modal-box" style="max-width:500px;">
+    <div class="modal-header">
+      <span class="modal-title">Contribuer</span>
+      <button class="modal-close" onclick="closeModal('addPriceModal')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+
+    <div class="modal-tabs" style="overflow-x:auto;">
+      <button class="modal-tab active" id="ctab1" onclick="switchContribTab(1)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Prix
+      </button>
+      <button class="modal-tab" id="ctab2" onclick="switchContribTab(2)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        Produit
+      </button>
+      <button class="modal-tab" id="ctab3" onclick="switchContribTab(3)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Magasin
+      </button>
+      <button class="modal-tab" id="ctab4" onclick="switchContribTab(4)">
+        <svg viewBox="0 0 24 24" fill="none" style="width:13px;height:13px;stroke:currentColor;stroke-width:2;flex-shrink:0;"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Catégorie
+      </button>
+    </div>
+
+    <!-- TAB 1 : PRIX -->
+    <div id="ctabContent1" class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Produit</label>
+        <select class="form-input form-select" id="apProduct"></select>
+        <div class="form-hint">Produit manquant ? Utilisez l'onglet "Nouveau produit".</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Magasin</label>
+        <select class="form-input form-select" id="apStore"></select>
+        <div class="form-hint">Magasin manquant ? Utilisez l'onglet "Nouveau magasin".</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prix (FCFA)</label>
+        <input class="form-input" type="number" id="apPrice" placeholder="ex: 850" min="1"/>
+      </div>
+      <div class="form-error" id="apError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="apBtn" onclick="doAddPrice()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Publier le prix
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 2 : NOUVEAU PRODUIT -->
+    <div id="ctabContent2" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom du produit</label>
+        <input class="form-input" id="npName" placeholder="ex: Igname 1 kg, Huile Dinor 1L..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <select class="form-input form-select" id="npCat"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unité / Quantité</label>
+        <input class="form-input" id="npUnit" placeholder="ex: 1 kg, 500 g, 1 L, unité"/>
+        <div class="form-hint">Précisez le poids ou le volume pour comparer correctement.</div>
+      </div>
+      <div class="form-error" id="npError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="npBtn" onclick="doAddProduct()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter le produit
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 3 : NOUVEAU MAGASIN -->
+    <div id="ctabContent3" class="modal-body" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom du magasin</label>
+        <input class="form-input" id="nsName" placeholder="ex: Marché de Yopougon, Auchan Cocody..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Type</label>
+        <select class="form-input form-select" id="nsType">
+          <option value="marche">Marché</option>
+          <option value="supermarche">Supermarché</option>
+          <option value="boutique">Boutique / Épicerie</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quartier</label>
+        <input class="form-input" id="nsNeighborhood" placeholder="ex: Yopougon, Abobo, Cocody..."/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ville</label>
+        <input class="form-input" id="nsCity" value="Abidjan"/>
+      </div>
+      <div class="form-error" id="nsError"></div>
+      <div class="modal-footer" style="padding:0;margin-top:1rem;border:none;">
+        <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Annuler</button>
+        <button class="btn btn-primary" id="nsBtn" onclick="doAddStore()">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter le magasin
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let currentQ = '';
+let currentCat = '';
+let allProducts = [];
+
+/* ── READ URL PARAMS ── */
+const params = new URLSearchParams(window.location.search);
+if (params.get('q')) document.getElementById('searchInput').value = params.get('q');
+if (params.get('category_id')) currentCat = params.get('category_id');
+
+/* ── SEARCH ── */
+async function doSearch() {
+  currentQ = document.getElementById('searchInput').value.trim();
+  const results = document.getElementById('results');
+  const count   = document.getElementById('resultsCount');
+  results.innerHTML = `<div class="skeleton" style="height:120px;border-radius:12px;margin-bottom:1rem;"></div><div class="skeleton" style="height:120px;border-radius:12px;margin-bottom:1rem;"></div>`;
+  count.textContent = 'Recherche...';
+  try {
+    const products = await rp.searchProducts(currentQ, currentCat);
+    allProducts = products;
+    count.textContent = `${products.length} produit${products.length > 1 ? 's' : ''} trouvé${products.length > 1 ? 's' : ''}`;
+    if (!products.length) {
+      results.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><h3>Aucun produit trouvé</h3><p>Essayez un autre terme ou <button onclick="openModal('addPriceModal')" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:inherit;">ajoutez le premier prix</button>.</p></div>`;
+      return;
+    }
+    // Load prices for each product
+    const details = await Promise.all(products.map(p => rp.getProduct(p.id)));
+    results.innerHTML = details.map(p => renderProductCard(p)).join('');
+  } catch (e) {
+    results.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><h3>Erreur de connexion</h3><p>Vérifiez que le serveur est démarré.</p></div>`;
+  }
+}
+
+function renderProductCard(p) {
+  const prices = (p.prices || []).slice(0, 3);
+  const allPrices = prices.map(x => x.price);
+  const min = allPrices.length ? Math.min(...allPrices) : 0;
+  const max = allPrices.length ? Math.max(...allPrices) : 0;
+  const saving = max - min;
+
+  const pricesHTML = prices.length === 0
+    ? `<div class="pc-prices-empty"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Aucun prix — soyez le premier !</div>`
+    : `<div class="pc-prices">${prices.map((pr, i) => {
+        const cls = pr.price === min ? 'price-low' : pr.price === max && prices.length > 1 ? 'price-high' : 'price-mid';
+        return `<div class="pc-price">
+          ${i === 0 ? `<div style="position:absolute;top:8px;right:8px;"><span class="badge badge-green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Moins cher</span></div>` : ''}
+          <div class="pc-store"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${pr.store_name}</div>
+          <div class="pc-val ${cls}">${Number(pr.price).toLocaleString('fr-FR')} F</div>
+          <div class="pc-time"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${timeAgo(pr.created_at)} · ${pr.contributor}</div>
+        </div>`;
+      }).join('')}</div>`;
+
+  return `
+    <div class="product-card" onclick="window.location='/search?q=${encodeURIComponent(p.name)}'">
+      <div class="pc-header">
+        <div>
+          <div class="pc-name">${p.name}</div>
+          <div class="pc-unit">${p.unit} · ${p.category || ''}</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();preselectProduct(${p.id});openModal('addPriceModal')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Ajouter
+        </button>
+      </div>
+      ${pricesHTML}
+      ${saving > 0 ? `<div class="pc-footer"><div class="pc-gap">Économisez jusqu'à <strong>${saving.toLocaleString('fr-FR')} F</strong> en choisissant le bon endroit</div></div>` : '<div class="pc-footer"><div class="pc-gap text-muted">${prices.length} prix référencé${prices.length > 1 ? "s" : ""}</div></div>'}
+    </div>`;
+}
+
+/* ── FILTERS ── */
+async function loadFilterCats() {
+  const cats = await rp.getCategories();
+  const el = document.getElementById('filterCat');
+  el.innerHTML = `<label class="filter-item active"><input type="radio" name="cat" value="" ${!currentCat ? 'checked' : ''}/> Toutes</label>`
+    + cats.map(c => `<label class="filter-item"><input type="radio" name="cat" value="${c.id}" ${String(currentCat) === String(c.id) ? 'checked' : ''}/> ${c.name}</label>`).join('');
+  el.querySelectorAll('input').forEach(inp => inp.addEventListener('change', () => { currentCat = inp.value; doSearch(); }));
+}
+document.querySelectorAll('input[name="type"]').forEach(inp => inp.addEventListener('change', () => doSearch()));
+
+/* ── CONTRIB TABS ── */
+function switchContribTab(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`ctab${i}`).classList.toggle('active', i === n);
+    document.getElementById(`ctabContent${i}`).style.display = i === n ? 'block' : 'none';
+  });
+}
+
+/* ── ADD PRICE ── */
+async function initAddPrice() {
+  const [products, stores, cats] = await Promise.all([rp.searchProducts(''), rp.getStores(), rp.getCategories()]);
+  document.getElementById('apProduct').innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+  document.getElementById('apStore').innerHTML   = stores.map(s   => `<option value="${s.id}">${s.name} — ${s.neighborhood||s.city}</option>`).join('');
+  document.getElementById('npCat').innerHTML     = cats.map(c     => `<option value="${c.id}">${c.name}</option>`).join('');
+}
+function preselectProduct(id) {
+  const sel = document.getElementById('apProduct');
+  if (sel) sel.value = id;
+}
+async function doAddPrice() {
+  if (!rp.isLogged()) { closeModal('addPriceModal'); openModal('authModal'); return; }
+  const product_id = document.getElementById('apProduct').value;
+  const store_id   = document.getElementById('apStore').value;
+  const price      = document.getElementById('apPrice').value;
+  const errEl      = document.getElementById('apError');
+  const btn        = document.getElementById('apBtn');
+  errEl.classList.remove('show');
+  if (!price) { errEl.textContent = 'Veuillez entrer un prix.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    const res = await rp.addPrice({ product_id: Number(product_id), store_id: Number(store_id), price: Number(price) });
+    toast(res.message);
+    closeModal('addPriceModal');
+    document.getElementById('apPrice').value = '';
+    doSearch();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+/* ── ADD PRODUCT ── */
+async function doAddProduct() {
+  if (!rp.isLogged()) { closeModal('addPriceModal'); openModal('authModal'); return; }
+  const name = document.getElementById('npName').value.trim();
+  const category_id = document.getElementById('npCat').value;
+  const unit = document.getElementById('npUnit').value.trim();
+  const errEl = document.getElementById('npError');
+  const btn   = document.getElementById('npBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom du produit est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    await rp.createProduct({ name, category_id: Number(category_id), unit: unit || 'unité' });
+    toast(`"${name}" ajouté au catalogue ! Vous pouvez maintenant ajouter son prix.`);
+    document.getElementById('npName').value = '';
+    document.getElementById('npUnit').value = '';
+    await initAddPrice(); // Refresh lists
+    switchContribTab(1);  // Retour à l'onglet prix
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+/* ── ADD STORE ── */
+async function doAddStore() {
+  if (!rp.isLogged()) { closeModal('addPriceModal'); openModal('authModal'); return; }
+  const name = document.getElementById('nsName').value.trim();
+  const type = document.getElementById('nsType').value;
+  const neighborhood = document.getElementById('nsNeighborhood').value.trim();
+  const city = document.getElementById('nsCity').value.trim() || 'Abidjan';
+  const errEl = document.getElementById('nsError');
+  const btn   = document.getElementById('nsBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    await rp.addStore({ name, type, neighborhood, city });
+    toast(`"${name}" ajouté !`);
+    document.getElementById('nsName').value = '';
+    document.getElementById('nsNeighborhood').value = '';
+    await initAddPrice();
+    switchContribTab(1);
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+async function doAddCategory() {
+  if (!rp.isLogged()) { closeModal('addPriceModal'); openModal('authModal'); return; }
+  const name  = document.getElementById('ncName').value.trim();
+  const errEl = document.getElementById('ncError');
+  const btn   = document.getElementById('ncBtn');
+  errEl.classList.remove('show');
+  if (!name) { errEl.textContent = 'Le nom est obligatoire.'; errEl.classList.add('show'); return; }
+  btn.disabled = true;
+  try {
+    const res = await rp.createCategory(name);
+    toast(res.message);
+    document.getElementById('ncName').value = '';
+    await initAddPrice();
+    switchContribTab(2);
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+/* ── AUTH ── */
+function switchTab(tab) {
+  document.getElementById('formLogin').style.display    = tab === 'login' ? 'block' : 'none';
+  document.getElementById('formRegister').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+}
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show'); btn.disabled = true;
+  try {
+    const res = await rp.login({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+    rp.setSession(res.token, res.user);
+    closeModal('authModal'); toast('Bienvenue ' + res.user.name.split(' ')[0] + ' !'); renderNav();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+async function doRegister() {
+  const btn = document.getElementById('registerBtn');
+  const errEl = document.getElementById('regError');
+  errEl.classList.remove('show'); btn.disabled = true;
+  try {
+    const res = await rp.register({ name: document.getElementById('regName').value, email: document.getElementById('regEmail').value, password: document.getElementById('regPassword').value });
+    rp.setSession(res.token, res.user);
+    closeModal('authModal'); toast('Compte créé ! 🎉'); renderNav();
+  } catch (e) { errEl.textContent = e.message; errEl.classList.add('show'); }
+  finally { btn.disabled = false; }
+}
+
+const user = rp.getUser();
+if (user) { const a = document.getElementById('navAvatar'); if(a) a.textContent = user.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+
+loadFilterCats();
+initAddPrice();
+doSearch();
+
+document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+</script>
+</body>
+</html>
