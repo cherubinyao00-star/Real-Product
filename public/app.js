@@ -1,5 +1,5 @@
 /* ── RealProduct · API Client ── */
-const API = 'http://localhost:3000/api';
+const API = 'https://realproduct-kcpf.onrender.com/api';
 
 const rp = {
   /* ── Auth helpers ── */
